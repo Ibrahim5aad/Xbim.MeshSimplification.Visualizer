@@ -1,0 +1,140 @@
+<Window x:Class="Xbim.MeshSimplification.Visualizer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:helix="http://helix-toolkit.org/wpf"
+        mc:Ignorable="d"
+        Title="Xbim Mesh Simplification" Height="800" Width="1200">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Menu Bar -->
+        <Menu Grid.Row="0">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open IFC File..." Click="OpenFile_Click"/>
+                <Separator/>
+                <MenuItem Header="_Exit" Click="Exit_Click"/>
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="_Reset Camera" Click="ResetCamera_Click"/>
+                <MenuItem Header="_Rendering Mode">
+                    <MenuItem Header="_Solid" x:Name="SolidMenuItem" Click="SolidMode_Click" IsCheckable="True" IsChecked="True"/>
+                    <MenuItem Header="_Wireframe" x:Name="WireframeMenuItem" Click="WireframeMode_Click" IsCheckable="True"/>
+                    <MenuItem Header="Solid with _Edges" x:Name="SolidWithEdgesMenuItem" Click="SolidWithEdgesMode_Click" IsCheckable="True"/>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About" Click="About_Click"/>
+            </MenuItem>
+        </Menu>
+        
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- 3D Viewport -->
+            <helix:HelixViewport3D x:Name="Viewport3D" Grid.Column="0" 
+                                   Background="LightGray"
+                                   ShowCoordinateSystem="True"
+                                   ShowViewCube="True">
+                <helix:DefaultLights/>
+            </helix:HelixViewport3D>
+            
+            <!-- Control Panel -->
+            <Border Grid.Column="1" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="1,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="Mesh Simplification" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+                        
+                        <!-- File Info -->
+                        <GroupBox Header="Model Information" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock x:Name="FileNameText" Text="No file loaded" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="TriangleCountText" Text="Triangles: 0"/>
+                                <TextBlock x:Name="VertexCountText" Text="Vertices: 0"/>
+                            </StackPanel>
+                        </GroupBox>
+                        
+                        <!-- Simplification Controls -->
+                        <GroupBox Header="Simplification Settings" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Target Triangle Count:"/>
+                                <Slider x:Name="TargetTriangleSlider" 
+                                        Minimum="100" Maximum="10000" Value="1000"
+                                        TickFrequency="100" IsSnapToTickEnabled="True"
+                                        ValueChanged="TargetTriangleSlider_ValueChanged"/>
+                                <TextBlock x:Name="TargetTriangleText" Text="Target: 1000 triangles"/>
+                                
+                                <TextBlock Text="Reduction Factor:" Margin="0,10,0,0"/>
+                                <Slider x:Name="ReductionFactorSlider" 
+                                        Minimum="0.1" Maximum="0.9" Value="0.5"
+                                        TickFrequency="0.1" IsSnapToTickEnabled="True"
+                                        ValueChanged="ReductionFactorSlider_ValueChanged"/>
+                                <TextBlock x:Name="ReductionFactorText" Text="Factor: 50%"/>
+                                
+                                <Button x:Name="SimplifyButton" Content="Apply Simplification" 
+                                        Click="SimplifyButton_Click" Margin="0,10,0,0" IsEnabled="False"/>
+                                <Button x:Name="ResetButton" Content="Reset to Original" 
+                                        Click="ResetButton_Click" Margin="0,5,0,0" IsEnabled="False"/>
+                            </StackPanel>
+                        </GroupBox>
+                        
+                        <!-- Animation Controls -->
+                        <GroupBox Header="Animation Controls" Margin="0,0,0,10">
+                            <StackPanel>
+                                <Button x:Name="AnimateButton" Content="Animate Simplification" 
+                                        Click="AnimateButton_Click" IsEnabled="False"/>
+                                <TextBlock Text="Animation Speed:"/>
+                                <Slider x:Name="AnimationSpeedSlider" 
+                                        Minimum="0.1" Maximum="2.0" Value="1.0"
+                                        TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+                                <TextBlock x:Name="AnimationSpeedText" Text="Speed: 1.0x"/>
+                                
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button x:Name="PlayButton" Content="▶" Width="30" Click="PlayButton_Click" IsEnabled="False"/>
+                                    <Button x:Name="PauseButton" Content="⏸" Width="30" Click="PauseButton_Click" IsEnabled="False" Margin="5,0,0,0"/>
+                                    <Button x:Name="StopButton" Content="⏹" Width="30" Click="StopButton_Click" IsEnabled="False" Margin="5,0,0,0"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Step:" Margin="0,10,0,0"/>
+                                <Slider x:Name="StepSlider" 
+                                        Minimum="0" Maximum="100" Value="0"
+                                        TickFrequency="1" IsSnapToTickEnabled="True"
+                                        ValueChanged="StepSlider_ValueChanged" IsEnabled="False"/>
+                                <TextBlock x:Name="StepText" Text="Step: 0 / 0"/>
+                            </StackPanel>
+                        </GroupBox>
+                        
+                        <!-- Statistics -->
+                        <GroupBox Header="Simplification Statistics">
+                            <StackPanel>
+                                <TextBlock x:Name="OriginalTrianglesText" Text="Original: 0 triangles"/>
+                                <TextBlock x:Name="CurrentTrianglesText" Text="Current: 0 triangles"/>
+                                <TextBlock x:Name="ReductionPercentText" Text="Reduction: 0%"/>
+                                <TextBlock x:Name="QualityMetricText" Text="Quality: N/A"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+        
+        <!-- Status Bar -->
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" Text="Ready"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <ProgressBar x:Name="ProgressBar" Width="200" Height="16" Visibility="Collapsed"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window> 
